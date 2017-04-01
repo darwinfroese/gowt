@@ -6,5 +6,8 @@ script:
   - make
 
 after_success:
-  - go test -v ./...
+  - echo "*** Running Unit Tests"
+  - go test -v ./mux
+  - echo "*** Running Integration Tests"
+  - go test -v ./tests/...
   
