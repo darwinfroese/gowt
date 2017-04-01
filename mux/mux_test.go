@@ -33,7 +33,7 @@ func TestRouteRegistration(t *testing.T) {
 	for i, test := range routeRegistrationTests {
 		t.Logf("%02d %s", i, test.description)
 
-		ok := mux.AddRoute(test.route)
+		ok := mux.AddRoute(test.route, nil)
 		l := len(mux.Routes)
 
 		if ok != test.expectedOutcome {

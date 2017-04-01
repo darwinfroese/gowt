@@ -4,9 +4,16 @@ import (
 	"net/http"
 )
 
-// Mux is a multiplexer
+// Mux - A multiplexer object
 type Mux struct {
-	Routes []string
+	Routes []Route
+}
+
+// Route - A Route Object
+type Route struct {
+	URL       string
+	Handler   http.HandlerFunc
+	SubRoutes []string
 }
 
 // NewMux returns a new Mux object
@@ -15,14 +22,14 @@ func NewMux() *Mux {
 }
 
 // AddRoute adds a route to the mux
-func (m *Mux) AddRoute(route string) bool {
+func (m *Mux) AddRoute(route string, handler http.HandlerFunc) bool {
 	i, ok := m.containsRoute(route)
 	if ok {
-		m.Routes[i] = route
+		m.Routes[i].Handler = handler
 		return true
 	}
 
-	m.Routes = append(m.Routes, route)
+	m.Routes = append(m.Routes, Route{URL: route, Handler: handler})
 
 	return true
 }

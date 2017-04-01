@@ -2,7 +2,7 @@ package mux
 
 func (m *Mux) containsRoute(route string) (int, bool) {
 	for i, r := range m.Routes {
-		if r == route {
+		if r.URL == route {
 			return i, true
 		}
 	}
