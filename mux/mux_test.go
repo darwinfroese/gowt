@@ -44,3 +44,45 @@ func TestRouteRegistration(t *testing.T) {
 		}
 	}
 }
+
+var errorRegistrationTests = []struct {
+	description     string
+	errorCode       int
+	expectedOutcome bool
+	expectedCount   int
+}{{
+	description:     "Testing: Registering an error handler on a new mux should succeed.",
+	errorCode:       404,
+	expectedOutcome: true,
+	expectedCount:   1,
+}, {
+	description:     "Testing: Registering a second error handler on a new mux should succeed.",
+	errorCode:       500,
+	expectedOutcome: true,
+	expectedCount:   2,
+}, {
+	description:     "Testing: Registering an error handler for a registered error code should replace the handler.",
+	errorCode:       404,
+	expectedOutcome: true,
+	expectedCount:   2,
+}}
+
+func TestErrorHandlerRegistration(t *testing.T) {
+	t.Log("Testing error handler registration...")
+	mux := NewMux()
+
+	for i, test := range errorRegistrationTests {
+		t.Logf("%02d %s", i, test.description)
+
+		ok := mux.AddErrorHandler(test.errorCode, nil)
+		l := len(mux.ErrorHandlers)
+
+		if ok != test.expectedOutcome {
+			t.Errorf("FAIL - Expected %v but got %v", test.expectedOutcome, ok)
+		}
+
+		if l != test.expectedCount {
+			t.Errorf("FAIL - Expected %d routes but have %d routes", test.expectedCount, l)
+		}
+	}
+}

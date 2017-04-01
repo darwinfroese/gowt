@@ -7,6 +7,8 @@ import (
 // Mux - A multiplexer object
 type Mux struct {
 	Routes []Route
+
+	ErrorHandlers map[int]Route
 }
 
 // Route - A Route Object
@@ -18,7 +20,9 @@ type Route struct {
 
 // NewMux returns a new Mux object
 func NewMux() *Mux {
-	return &Mux{}
+	return &Mux{
+		ErrorHandlers: make(map[int]Route, 0),
+	}
 }
 
 // AddRoute adds a route to the mux
@@ -31,6 +35,12 @@ func (m *Mux) AddRoute(route string, handler http.HandlerFunc) bool {
 
 	m.Routes = append(m.Routes, Route{URL: route, Handler: handler})
 
+	return true
+}
+
+// AddErrorHandler maps a handler to an HTTP status code
+func (m *Mux) AddErrorHandler(status int, handler http.HandlerFunc) bool {
+	m.ErrorHandlers[status] = Route{Handler: handler}
 	return true
 }
 
