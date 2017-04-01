@@ -5,4 +5,4 @@ all: mux
 
 .PHONY: mux
 mux:
-	go build -o bin/mux examples/mux/main.go
+	go build mux/mux.go mux/muxUtils.go
