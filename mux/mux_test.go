@@ -1,28 +1,33 @@
 package mux
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
+type response struct {
+	Body string
+	Code int
+}
+
 var routeRegistrationTests = []struct {
 	description, route string
-	expectedOutcome    bool
 	expectedCount      int
 }{{
-	description:     "Testing: Route registration on new mux should succeed",
-	route:           "testroute",
-	expectedOutcome: true,
-	expectedCount:   1,
+	description:   "Testing: Route registration on new mux should add one route",
+	route:         "testroute",
+	expectedCount: 1,
 }, {
-	description:     "Testing: Registering a second route should succeed",
-	route:           "testroute2",
-	expectedOutcome: true,
-	expectedCount:   2,
+	description:   "Testing: Registering a second route should increment the route count by one",
+	route:         "testroute2",
+	expectedCount: 2,
 }, {
-	description:     "Testing: Registering a registered route should overwrite existing route",
-	route:           "testroute2",
-	expectedOutcome: true,
-	expectedCount:   2,
+	description:   "Testing: Registering a registered route should overwrite existing route",
+	route:         "testroute2",
+	expectedCount: 2,
 }}
 
 func TestRouteRegistration(t *testing.T) {
@@ -31,58 +36,70 @@ func TestRouteRegistration(t *testing.T) {
 	mux := NewMux()
 
 	for i, test := range routeRegistrationTests {
-		t.Logf("%02d %s", i, test.description)
+		t.Logf("[ %02d ] %s", i+1, test.description)
 
-		ok := mux.AddRoute(test.route, nil)
+		mux.AddRoute(test.route, nil)
 		l := len(mux.Routes)
 
-		if ok != test.expectedOutcome {
-			t.Errorf("FAIL - Expected %v but got %v", test.expectedOutcome, ok)
-		}
 		if l != test.expectedCount {
 			t.Errorf("FAIL - Expceted %d routes but have %d", test.expectedCount, l)
 		}
 	}
 }
 
-var errorRegistrationTests = []struct {
-	description     string
-	errorCode       int
-	expectedOutcome bool
-	expectedCount   int
+var errorHandlerTests = []struct {
+	description, route string
+	mux                Mux
+	expectedResponse   response
 }{{
-	description:     "Testing: Registering an error handler on a new mux should succeed.",
-	errorCode:       404,
-	expectedOutcome: true,
-	expectedCount:   1,
+	description:      "Testing: Default not found handler returns expected response.",
+	route:            "/notfound",
+	mux:              Mux{NotFoundHandler: DefaultNotFoundHandler},
+	expectedResponse: response{Body: http.StatusText(http.StatusNotFound), Code: http.StatusNotFound},
 }, {
-	description:     "Testing: Registering a second error handler on a new mux should succeed.",
-	errorCode:       500,
-	expectedOutcome: true,
-	expectedCount:   2,
+	description:      "Testing: Default internal server error handler returns expected response.",
+	route:            "/{}/servererror",
+	mux:              Mux{InternalErrorHandler: DefaultInternalServerHandler},
+	expectedResponse: response{Body: http.StatusText(http.StatusInternalServerError), Code: http.StatusInternalServerError},
 }, {
-	description:     "Testing: Registering an error handler for a registered error code should replace the handler.",
-	errorCode:       404,
-	expectedOutcome: true,
-	expectedCount:   2,
+	description: "Testing: Overwritten not found handler returns expected response.",
+	route:       "/notfound",
+	mux: Mux{NotFoundHandler: func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Couldn't find the handler")
+	}},
+	expectedResponse: response{Body: "Couldn't find the handler", Code: http.StatusNotFound},
+}, {
+	description: "Testing: Overwritten internal server error handler returns expected response.",
+	route:       "/{}/servererror",
+	mux: Mux{InternalErrorHandler: func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "There was an error")
+	}},
+	expectedResponse: response{Body: "There was an error", Code: http.StatusInternalServerError},
 }}
 
 func TestErrorHandlerRegistration(t *testing.T) {
 	t.Log("Testing error handler registration...")
-	mux := NewMux()
 
-	for i, test := range errorRegistrationTests {
-		t.Logf("%02d %s", i, test.description)
+	for i, test := range errorHandlerTests {
+		t.Logf("[ %02d ] %s", i+1, test.description)
 
-		ok := mux.AddErrorHandler(test.errorCode, nil)
-		l := len(mux.ErrorHandlers)
+		r := httptest.NewRequest("GET", test.route, nil)
+		w := httptest.NewRecorder()
 
-		if ok != test.expectedOutcome {
-			t.Errorf("FAIL - Expected %v but got %v", test.expectedOutcome, ok)
+		test.mux.ServeHTTP(w, r)
+
+		if w.Code != test.expectedResponse.Code {
+			t.Logf("[FAIL] :: Expected status code %d but got status code %d.\n", test.expectedResponse.Code, w.Code)
+			t.Fail()
 		}
 
-		if l != test.expectedCount {
-			t.Errorf("FAIL - Expected %d routes but have %d routes", test.expectedCount, l)
+		body := strings.TrimSpace(w.Body.String())
+
+		if body != test.expectedResponse.Body {
+			t.Logf("[FAIL] :: Expected body \"%s\" but got body \"%s\"", test.expectedResponse.Body, body)
+			t.Fail()
 		}
 	}
 }
