@@ -1,0 +1,7 @@
+Routes:
+	- Set Methods on routes
+	- Enable CORS
+	- Set default response headers
+	- Set variables in routes {name: type}
+
+- documentation

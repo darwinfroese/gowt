@@ -1,3 +1,5 @@
-- apply settings on a route so that routes can be returned and the settings applied through function chains
-- allow registering routes with variables and wild cards
-- documentation
+Toolkit ideas
+
+- Logger
+- Testing framework
+- Stubbed/Mocked mux
