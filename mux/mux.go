@@ -15,12 +15,6 @@ type Mux struct {
 	InternalErrorHandler http.HandlerFunc
 }
 
-// Route - A Route Object
-type Route struct {
-	URL     string
-	Handler http.HandlerFunc
-}
-
 // NewMux returns a new Mux object
 func NewMux() *Mux {
 	return &Mux{
@@ -30,17 +24,17 @@ func NewMux() *Mux {
 }
 
 // AddRoute adds a route to the mux
-func (m *Mux) AddRoute(route string, handler http.HandlerFunc) Route {
+func (m *Mux) AddRoute(route string, handler http.HandlerFunc) *Route {
 	i, ok := m.containsRoute(route)
 	if ok {
 		m.Routes[i].Handler = handler
-		return m.Routes[i]
+		return &m.Routes[i]
 	}
 
 	r := Route{URL: route, Handler: handler}
 	m.Routes = append(m.Routes, r)
 
-	return r
+	return &r
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {

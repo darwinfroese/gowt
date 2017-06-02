@@ -5,4 +5,4 @@ all: mux
 
 .PHONY: mux
 mux:
-	go build mux/mux.go mux/muxUtils.go mux/defaultHandlers.go
+	go build mux/mux.go mux/utils.go mux/default_handlers.go mux/route.go
