@@ -23,7 +23,7 @@ func NewMux() *Mux {
 	}
 }
 
-// AddRoute adds a route to the mux
+// AddRoute adds a route to the multiplexer
 func (m *Mux) AddRoute(route string, handler http.HandlerFunc) *Route {
 	i, ok := m.containsRoute(route)
 	if ok {

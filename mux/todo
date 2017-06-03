@@ -3,5 +3,9 @@ Routes:
 	- Enable CORS
 	- Set default response headers
 	- Set variables in routes {name: type}
+		- DONE: Variables can be extracted from routes
+
+Multiplexer:
+	- better route matching (subroutes)
 
 - documentation
