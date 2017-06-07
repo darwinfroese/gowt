@@ -80,6 +80,10 @@ func getVariableInfo(variable string) (variableInfo, error) {
 		return variableInfo{}, errors.New("Missing the variable name in variable declaration")
 	}
 
+	if decon == "" {
+		return variableInfo{}, errors.New("Missing variable information in variable declaration")
+	}
+
 	pieces := strings.Split(decon, ":")
 	// if kindString is empty, it'll default to interface
 	kindString := ""

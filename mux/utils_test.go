@@ -35,10 +35,15 @@ var routeExtractionTests = []struct {
 	expected:     nil,
 	errorMessage: "Missing '}' in route variable declaration",
 }, {
-	description:  "Testing: When providing a route without a namew the variable will not be extracted.",
+	description:  "Testing: When providing a route without a name the variable will not be extracted.",
 	route:        "/test/{:string}/test",
 	expected:     nil,
 	errorMessage: "Missing the variable name in variable declaration",
+}, {
+	description:  "Testing: When providing an empty variable decleration the variable should not be extracted.",
+	route:        "/test/{}/test",
+	expected:     nil,
+	errorMessage: "Missing variable information in variable declaration",
 }}
 
 func TestRouteExtraction(t *testing.T) {
