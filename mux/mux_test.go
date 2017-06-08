@@ -38,8 +38,8 @@ func TestRouteRegistration(t *testing.T) {
 	for i, test := range routeRegistrationTests {
 		t.Logf("[ %02d ] %s", i+1, test.description)
 
-		mux.AddRoute(test.route, nil)
-		l := len(mux.Routes)
+		mux.RegisterRoute(test.route, nil)
+		l := len(mux.routes)
 
 		if l != test.expectedCount {
 			t.Errorf("FAIL - Expceted %d routes but have %d", test.expectedCount, l)
@@ -57,11 +57,6 @@ var errorHandlerTests = []struct {
 	mux:              Mux{NotFoundHandler: DefaultNotFoundHandler},
 	expectedResponse: response{Body: http.StatusText(http.StatusNotFound), Code: http.StatusNotFound},
 }, {
-	description:      "Testing: Default internal server error handler returns expected response.",
-	route:            "/{}/servererror",
-	mux:              Mux{InternalErrorHandler: DefaultInternalServerHandler},
-	expectedResponse: response{Body: http.StatusText(http.StatusInternalServerError), Code: http.StatusInternalServerError},
-}, {
 	description: "Testing: Overwritten not found handler returns expected response.",
 	route:       "/notfound",
 	mux: Mux{NotFoundHandler: func(w http.ResponseWriter, r *http.Request) {
@@ -69,14 +64,6 @@ var errorHandlerTests = []struct {
 		fmt.Fprintln(w, "Couldn't find the handler")
 	}},
 	expectedResponse: response{Body: "Couldn't find the handler", Code: http.StatusNotFound},
-}, {
-	description: "Testing: Overwritten internal server error handler returns expected response.",
-	route:       "/{}/servererror",
-	mux: Mux{InternalErrorHandler: func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "There was an error")
-	}},
-	expectedResponse: response{Body: "There was an error", Code: http.StatusInternalServerError},
 }}
 
 func TestErrorHandlerRegistration(t *testing.T) {

@@ -12,7 +12,7 @@ type variableInfo struct {
 }
 
 func (m *Mux) containsRoute(route string) (int, bool) {
-	for i, r := range m.Routes {
+	for i, r := range m.routes {
 		if r.URL == route {
 			return i, true
 		}

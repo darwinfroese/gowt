@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 func setup() {
 	m := mux.NewMux()
 
-	m.AddRoute("/hello", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, expectedOutput) })
+	m.RegisterRoute("/hello", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, expectedOutput) })
 
 	srv = httptest.NewServer(m)
 }
