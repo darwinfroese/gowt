@@ -48,26 +48,31 @@ func TestRouteRegistration(t *testing.T) {
 }
 
 var errorHandlerTests = []struct {
-	description, route string
-	mux                Mux
-	expectedResponse   response
+	description, route           string
+	handler                      http.HandlerFunc
+	expectedResponse             response
+	expectedRegistrationResponse bool
 }{{
-	description:      "Testing: Default not found handler returns expected response.",
-	route:            "/notfound",
-	mux:              Mux{NotFoundHandler: DefaultNotFoundHandler},
-	expectedResponse: response{Body: http.StatusText(http.StatusNotFound), Code: http.StatusNotFound},
+	description:                  "Testing: When not registering a not found handler the default not found handler's response is returned.",
+	route:                        "/notfound",
+	handler:                      nil,
+	expectedResponse:             response{Body: http.StatusText(http.StatusNotFound), Code: http.StatusNotFound},
+	expectedRegistrationResponse: false,
 }, {
-	description: "Testing: Overwritten not found handler returns expected response.",
+	description: "Testing: When registering a new not found handler the new not found handler's response is returned and we are informed of the overwrite.",
 	route:       "/notfound",
-	mux: Mux{NotFoundHandler: func(w http.ResponseWriter, r *http.Request) {
+	handler: func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "Couldn't find the handler")
-	}},
-	expectedResponse: response{Body: "Couldn't find the handler", Code: http.StatusNotFound},
+	},
+	expectedResponse:             response{Body: "Couldn't find the handler", Code: http.StatusNotFound},
+	expectedRegistrationResponse: true,
 }}
 
 func TestErrorHandlerRegistration(t *testing.T) {
 	t.Log("Testing error handler registration...")
+
+	m := NewMux()
 
 	for i, test := range errorHandlerTests {
 		t.Logf("[ %02d ] %s", i+1, test.description)
@@ -75,7 +80,18 @@ func TestErrorHandlerRegistration(t *testing.T) {
 		r := httptest.NewRequest("GET", test.route, nil)
 		w := httptest.NewRecorder()
 
-		test.mux.ServeHTTP(w, r)
+		// if the test doesn't register a handler we want it to pass
+		overwritten := test.expectedRegistrationResponse
+
+		if test.handler != nil {
+			overwritten = m.RegisterErrorHandler(http.StatusNotFound, test.handler)
+		}
+
+		if overwritten != test.expectedRegistrationResponse {
+			t.Logf("[FAIL] :: Expected the overwritten response to be %v but was %v.\n", test.expectedRegistrationResponse, overwritten)
+		}
+
+		m.ServeHTTP(w, r)
 
 		if w.Code != test.expectedResponse.Code {
 			t.Logf("[FAIL] :: Expected status code %d but got status code %d.\n", test.expectedResponse.Code, w.Code)
