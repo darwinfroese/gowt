@@ -10,4 +10,6 @@ type Route struct {
 	Handler http.HandlerFunc
 
 	allowedMethods []string
+	hasVariables   bool
+	variables      []variableInfo
 }

@@ -22,18 +22,33 @@ func NewMux() *Mux {
 	}
 }
 
-// RegisterRoute adds a route to the multiplexer
-func (m *Mux) RegisterRoute(route string, handler http.HandlerFunc) *Route {
+// RegisterRoute adds a route to the multiplexer and extracts the variable
+// information if any variables are in the route
+func (m *Mux) RegisterRoute(route string, handler http.HandlerFunc) (*Route, error) {
 	i, ok := m.containsRoute(route)
-	if ok {
-		m.routes[i].Handler = handler
-		return &m.routes[i]
+
+	variables, err := getVariablesFromRoute(route)
+
+	if err != nil {
+		return nil, err
 	}
 
-	r := Route{URL: route, Handler: handler}
+	if ok {
+		m.routes[i].Handler = handler
+		m.routes[i].variables = variables
+		m.routes[i].hasVariables = len(variables) > 0
+		return &m.routes[i], nil
+	}
+
+	r := Route{
+		URL:          route,
+		Handler:      handler,
+		variables:    variables,
+		hasVariables: len(variables) > 0,
+	}
 	m.routes = append(m.routes, r)
 
-	return &r
+	return &r, nil
 }
 
 // RegisterErrorHandler registers an http.HandlerFunc for a status code providing
@@ -49,11 +64,14 @@ func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) boo
 	return ok
 }
 
+// ServeHTTP matches the route incoming to the routes registered and calls the
+// matched handler. If the route contains a variable, the match is based around
+// the variable value
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path
 
 	for _, route := range m.routes {
-		if route.URL == url {
+		if matchRoute(route, url) {
 			route.Handler(w, r)
 			return
 		}

@@ -106,3 +106,69 @@ func TestErrorHandlerRegistration(t *testing.T) {
 		}
 	}
 }
+
+var variableRouteRegistrationTests = []struct {
+	description, route, requestRoute string
+	handler                          http.HandlerFunc
+	expectedResponse                 response
+	expectedVariableCount            int
+}{{
+	description:           "Testing: registering a route with no variables should have no variables stored.",
+	route:                 "/testingnovariables",
+	requestRoute:          "/testingnovariables",
+	handler:               func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "Hello World") },
+	expectedResponse:      response{Body: "Hello World", Code: 200},
+	expectedVariableCount: 0,
+}, {
+	description:           "Testing: registering a route with one variable should have one variable stored.",
+	route:                 "/testing/{name: string}/variable",
+	requestRoute:          "/testing/darwin/variable",
+	handler:               func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "Hello World") },
+	expectedResponse:      response{Body: "Hello World", Code: 200},
+	expectedVariableCount: 1,
+}, {
+	description:           "Testing: updating a route with a variable should keep the count at one.",
+	route:                 "/testing/{name: string}/variable",
+	requestRoute:          "/testing/darwin/variable",
+	handler:               func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "New function") },
+	expectedResponse:      response{Body: "New function", Code: 200},
+	expectedVariableCount: 1,
+}}
+
+func TestVariableRouteRegistration(t *testing.T) {
+	t.Log("Testing registering routes with variables in route.")
+
+	m := NewMux()
+
+	for i, test := range variableRouteRegistrationTests {
+		t.Logf("[ %02d ] %s", i+1, test.description)
+
+		route, err := m.RegisterRoute(test.route, test.handler)
+
+		if err != nil {
+			t.Logf("[FAIL] :: Failed to register the route. Error: \"%s\".", err.Error())
+			t.Fail()
+		}
+
+		r := httptest.NewRequest("GET", test.requestRoute, nil)
+		w := httptest.NewRecorder()
+
+		m.ServeHTTP(w, r)
+
+		if test.expectedResponse.Code != w.Code {
+			t.Logf("[FAIL] :: Expected status code %d but got status code %d.", test.expectedResponse.Code, w.Code)
+			t.Fail()
+		}
+
+		body := strings.TrimSpace(w.Body.String())
+		if test.expectedResponse.Body != body {
+			t.Logf("[FAIL] :: Expected body \"%s\" but got body \"%s\".", test.expectedResponse.Body, body)
+			t.Fail()
+		}
+
+		if test.expectedVariableCount != len(route.variables) {
+			t.Logf("[FAIL] :: Expected %d variables but got %d variables instead.", test.expectedVariableCount, len(route.variables))
+			t.Fail()
+		}
+	}
+}

@@ -6,11 +6,17 @@ import (
 	"strings"
 )
 
+// variableInfo contains the information about the variable
+// that is extracted from the route
 type variableInfo struct {
 	name string
 	kind reflect.Kind
 }
 
+// containsRoute performs a simple check on if the route is
+// already registered in the multiplexer. This is matched
+// exactly so the same route can be registered if the variable
+// names are different
 func (m *Mux) containsRoute(route string) (int, bool) {
 	for i, r := range m.routes {
 		if r.URL == route {
@@ -19,6 +25,32 @@ func (m *Mux) containsRoute(route string) (int, bool) {
 	}
 
 	return -1, false
+}
+
+// matchRoute attempts to match the request URL to the route
+// that is the same.
+//
+// Exact matching is used of there are no variables in the route.
+// If there are variables in the route then it matches around those
+func matchRoute(route Route, requestURL string) bool {
+	if !route.hasVariables {
+		return route.URL == requestURL
+	}
+
+	// match the url to the left of the variable declaration first
+	leftIdx := strings.Index(route.URL, "{")
+	if route.URL[:leftIdx-1] != requestURL[:leftIdx-1] {
+		return false
+	}
+
+	// match the url to the right of the variable declaration now
+	rightIdxRoute := strings.Index(route.URL[leftIdx:], "/")
+	rightIdxRequest := strings.Index(requestURL[leftIdx:], "/")
+	if route.URL[leftIdx+rightIdxRoute:] != requestURL[leftIdx+rightIdxRequest:] {
+		return false
+	}
+
+	return true
 }
 
 // getVariablesFromRoute - Returns an array of variableInfo structs for
@@ -73,6 +105,9 @@ func getVariableStrings(route string) ([]string, error) {
 	return variables, nil
 }
 
+// getVariableInfo extracts the information from the block of the
+// route that contains the variable decleraton and will return
+// an error if any information is missing.
 func getVariableInfo(variable string) (variableInfo, error) {
 	decon := variable[1 : len(variable)-1]
 
@@ -112,7 +147,7 @@ func checkVariableSyntax(route string) error {
 
 // getKind - Returns the reflect.Kind for a type defined by a string
 //
-// TODO: Can this be done without a switch/case
+// TODO: Can this be done without a switch/case?
 func getKind(kind string) reflect.Kind {
 	switch kind {
 	case "string":

@@ -80,3 +80,44 @@ func TestRouteExtraction(t *testing.T) {
 
 	}
 }
+
+var routeMatchingTests = []struct {
+	description, requestURL string
+	route                   Route
+	expectedMatch           bool
+}{{
+	description:   "Testing: Matching routes without variables should match.",
+	requestURL:    "/test/route",
+	route:         Route{URL: "/test/route", hasVariables: false},
+	expectedMatch: true,
+}, {
+	description:   "Testing: Non-matching routes without variables shouldn't match.",
+	requestURL:    "/test/route/one",
+	route:         Route{URL: "/test/route/two", hasVariables: false},
+	expectedMatch: false,
+}, {
+	description:   "Testing: Matching routes with variables should match.",
+	requestURL:    "/profile/darwin/name",
+	route:         Route{URL: "/profile/{name: string}/name", hasVariables: true},
+	expectedMatch: true,
+}, {
+	description:   "Testing: Non-matching routes with variables shouldn't match.",
+	requestURL:    "/profile/darwin/account",
+	route:         Route{URL: "/profile/{name: string}/name", hasVariables: true},
+	expectedMatch: false,
+}}
+
+func TestRouteMatching(t *testing.T) {
+	t.Log("Testing route matching function.")
+
+	for i, test := range routeMatchingTests {
+		t.Logf("[ %02d ] %s", i, test.description)
+
+		match := matchRoute(test.route, test.requestURL)
+
+		if match != test.expectedMatch {
+			t.Logf("[FAIL] :: Expected %v but got %v instead.", test.expectedMatch, match)
+			t.Fail()
+		}
+	}
+}

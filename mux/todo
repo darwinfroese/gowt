@@ -1,14 +1,13 @@
 Routes:
-	- TODO: Allow method restriction per Route
-	- TODO: Enable CORS per Route / on ALL routes
-	- TODO: Allow setting default response headers per route
-	- Set variables in routes {name: type}
-		- DONE: Variables can be extracted from routes
-		- TODO: Store extracted variable information
 	- Get variables from routes on request
 		- TODO: Store "block" the variable is contained in for fast lookup
 		- TODO: Create a way to retrieve the variables
-
+	- TODO: Overwrite responseWriter that lets me store the status code
+		to handle responding with default errorHandlers
+	- TODO: Allow method restriction per Route
+	- TODO: Enable CORS per Route / on ALL routes
+	- TODO: Allow setting default response headers per route
+	
 Multiplexer:
 	- TODO: Walk down the route for matching
 	- TODO: Allow wildcard registration?
@@ -17,3 +16,9 @@ Multiplexer:
 	- TODO: Document objects
 	- TODO: Document functions
 	- TODO: Document example, setup, usage
+
+- Benchmark
+	- TODO: Create benchmark tests to benchmark the Multiplexer
+		- Route registration
+		- Route matching
+		- Request serving
