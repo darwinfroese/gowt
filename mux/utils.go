@@ -2,6 +2,7 @@ package mux
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -9,8 +10,8 @@ import (
 // variableInfo contains the information about the variable
 // that is extracted from the route
 type variableInfo struct {
-	name string
-	kind reflect.Kind
+	name, route string
+	kind        reflect.Kind
 }
 
 // containsRoute performs a simple check on if the route is
@@ -71,6 +72,7 @@ func getVariablesFromRoute(route string) ([]variableInfo, error) {
 	infoSplice := []variableInfo{}
 	for _, variable := range variables {
 		info, err := getVariableInfo(variable)
+		info.route = route
 
 		if err != nil {
 			return nil, err
@@ -80,6 +82,17 @@ func getVariablesFromRoute(route string) ([]variableInfo, error) {
 	}
 
 	return infoSplice, nil
+}
+
+func getVariableFromRequest(info variableInfo, request string) interface{} {
+	name := info.name
+
+	startIdx := strings.Index(info.route, "{"+name)
+	endIdx := startIdx + strings.Index(request[startIdx:], "/")
+
+	fmt.Println("startIdx: ", startIdx, "endIdx: ", endIdx)
+
+	return request[startIdx:endIdx]
 }
 
 // getVariableStrings - Returns all the strings for the variables found
@@ -162,14 +175,6 @@ func getKind(kind string) reflect.Kind {
 		return reflect.Int32
 	case "int64":
 		return reflect.Int64
-	case "complex64":
-		return reflect.Complex64
-	case "complex128":
-		return reflect.Complex128
-	case "float32":
-		return reflect.Float32
-	case "float64":
-		return reflect.Float64
 	case "uint":
 		return reflect.Uint
 	case "uint8":

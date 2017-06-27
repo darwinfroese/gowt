@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -147,7 +148,7 @@ func TestVariableRouteRegistration(t *testing.T) {
 
 		if err != nil {
 			t.Logf("[FAIL] :: Failed to register the route. Error: \"%s\".", err.Error())
-			t.Fail()
+			t.FailNow()
 		}
 
 		r := httptest.NewRequest("GET", test.requestRoute, nil)
@@ -172,3 +173,71 @@ func TestVariableRouteRegistration(t *testing.T) {
 		}
 	}
 }
+
+var variableListRetrievalTests = []struct {
+	description, routeURL, requestURL string
+	expectedValues                    []interface{}
+	expectedErrorMessage              string
+}{{
+	description:          "Testing: When registering no variables in the route no variables are returned.",
+	routeURL:             "/test/no/variables",
+	requestURL:           "/test/no/variables",
+	expectedValues:       nil,
+	expectedErrorMessage: "No variables matched for the route and request",
+}, {
+	description:          "Testing: When registering a route with a variable in the route the expected variable is returned.",
+	routeURL:             "/test/{name: string}/test",
+	requestURL:           "/test/darwin/test",
+	expectedValues:       []interface{}{"darwin"},
+	expectedErrorMessage: "",
+}}
+
+func TestVariableListRetrieval(t *testing.T) {
+	t.Log("Testing getting all variables for a route.")
+
+	m := NewMux()
+	var values []interface{}
+	var retrieveError error
+	dummy := func(w http.ResponseWriter, r *http.Request) {
+		values, retrieveError = m.GetVariables(r)
+	}
+
+	for i, test := range variableListRetrievalTests {
+		t.Logf("[ %02d ] %s", i+1, test.description)
+
+		_, err := m.RegisterRoute(test.routeURL, dummy)
+
+		if err != nil {
+			t.Logf("[FAIL] :: Failed to register the route. Error: \"%s\".", err.Error())
+			t.FailNow()
+		}
+
+		r := httptest.NewRequest("GET", test.requestURL, nil)
+		w := httptest.NewRecorder()
+
+		m.ServeHTTP(w, r)
+
+		if retrieveError != nil {
+			if retrieveError.Error() != test.expectedErrorMessage {
+				t.Logf("[FAIL] :: Got an unexpected error retrieving the variables. Expected \"%s\" but got \"%s\".", test.expectedErrorMessage, retrieveError.Error())
+				t.Fail()
+			}
+		}
+
+		if len(test.expectedValues) != len(values) {
+			t.Logf("[FAIL] :: Expected %d variables but got %d variables.", len(test.expectedValues), len(values))
+			t.Fail()
+		}
+
+		if !reflect.DeepEqual(test.expectedValues, values) {
+			t.Logf("[FAIL] :: Expected to get %+v but got %+v.", test.expectedValues, values)
+			t.Fail()
+		}
+	}
+}
+
+var variableByNameRetrievalTests = []struct {
+	description, routeURL, requestURL, variableName string
+	expectedValue                                   interface{}
+	expectedErrorMessage                            string
+}{{}}

@@ -1,12 +1,19 @@
 Routes:
 	- Get variables from routes on request
-		- TODO: Store "block" the variable is contained in for fast lookup
-		- TODO: Create a way to retrieve the variables
+		- TODO: Get variable by name
+	- BUG: Doesn't handle routes with more than one variable
 	- TODO: Overwrite responseWriter that lets me store the status code
 		to handle responding with default errorHandlers
 	- TODO: Allow method restriction per Route
 	- TODO: Enable CORS per Route / on ALL routes
 	- TODO: Allow setting default response headers per route
+	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
+	- TODO: Moved to a tree based registration
+
+	- RESEARCH: Registering multiple routes where only variable changes in same location
+		- OPTION: 2 routes, check type, serve based on type
+		- OPTION: Replace route with new route and error/warn
+		- QUESTION: Is this something that would occur?
 	
 Multiplexer:
 	- TODO: Walk down the route for matching

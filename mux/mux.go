@@ -1,6 +1,10 @@
 package mux
 
-import "net/http"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
 // Mux - A multiplexer object that is used for registering routes
 //
@@ -62,6 +66,36 @@ func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) boo
 	m.ErrorHandlers[statusCode] = handler
 
 	return ok
+}
+
+// GetVariables returns a slice of interface{} that contains all the variables for
+// request.
+func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
+	var infoList []variableInfo
+	for _, route := range m.routes {
+		if matchRoute(route, request.URL.Path) {
+			infoList = append(infoList, route.variables...)
+		}
+	}
+
+	if len(infoList) == 0 {
+		return nil, errors.New("No variables matched for the route and request")
+	}
+
+	var vars []interface{}
+	for _, v := range infoList {
+		i := getVariableFromRequest(v, request.URL.Path)
+		vars = append(vars, i)
+	}
+
+	fmt.Printf("[INFO] :: Variables: %+v\n", vars)
+
+	return vars, nil
+}
+
+// GetVariableByName returns an interface{} that contains the value for the request
+func (m *Mux) GetVariableByName(name, request string) (interface{}, error) {
+	return nil, nil
 }
 
 // ServeHTTP matches the route incoming to the routes registered and calls the
