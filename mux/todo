@@ -1,10 +1,13 @@
 Routes:
-	- TODO: Get variable by name
 	- BUG: Doesn't handle routes with more than one variable
 	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
-	- TODO: Look into concurrency
 	- TODO: Enable CORS per Route / on ALL routes
 	- TODO: Allow method restriction per Route
+	- TODO: Refactor variable retrieval -- code duplication
+
+Multiplexer:
+	- TODO: Generalize route matching
+	- TODO: Look into concurrency
 	- TODO: Allow setting default response headers per route
 	- TODO: Overwrite responseWriter that lets me store the status code
 		to handle responding with default errorHandlers
