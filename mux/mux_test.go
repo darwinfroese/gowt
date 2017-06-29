@@ -199,6 +199,7 @@ func TestVariableListRetrieval(t *testing.T) {
 	var values []interface{}
 	var retrieveError error
 	dummy := func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Function was called")
 		values, retrieveError = m.GetVariables(r)
 	}
 
@@ -216,6 +217,11 @@ func TestVariableListRetrieval(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		m.ServeHTTP(w, r)
+
+		if strings.TrimSpace(w.Body.String()) != "Function was called" {
+			t.Logf("[FAIL] :: The dummy function was never called.")
+			t.FailNow()
+		}
 
 		if retrieveError != nil {
 			if retrieveError.Error() != test.expectedErrorMessage {

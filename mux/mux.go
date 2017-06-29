@@ -2,7 +2,6 @@ package mux
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -26,33 +25,25 @@ func NewMux() *Mux {
 	}
 }
 
-// RegisterRoute adds a route to the multiplexer and extracts the variable
-// information if any variables are in the route
+// RegisterHandler adds a Handler to the multiplexer for the route specified. If the
+// route that is being used has already been added, the existing route will be
+// replaced.
+// If the route was of type HandlerFunc, the HandlerFunc will be replaced with a
+// Handler.
+func (m *Mux) RegisterHandler(route string, handler http.Handler) (*Route, error) {
+	gh := gowtHandler{handler: handler}
+
+	return register(m, route, gh)
+}
+
+// RegisterRoute adds a HandlerFunc to the multiplexer for the route specified. If
+// the route that is being used has already been added, the existing route will be
+// replaced.
+// If the route was of type Handler, the Handler will be replaced with a HandlerFunc.
 func (m *Mux) RegisterRoute(route string, handler http.HandlerFunc) (*Route, error) {
-	i, ok := m.containsRoute(route)
+	gh := gowtHandler{handlerFunc: handler}
 
-	variables, err := getVariablesFromRoute(route)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if ok {
-		m.routes[i].Handler = handler
-		m.routes[i].variables = variables
-		m.routes[i].hasVariables = len(variables) > 0
-		return &m.routes[i], nil
-	}
-
-	r := Route{
-		URL:          route,
-		Handler:      handler,
-		variables:    variables,
-		hasVariables: len(variables) > 0,
-	}
-	m.routes = append(m.routes, r)
-
-	return &r, nil
+	return register(m, route, gh)
 }
 
 // RegisterErrorHandler registers an http.HandlerFunc for a status code providing
@@ -88,8 +79,6 @@ func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
 		vars = append(vars, i)
 	}
 
-	fmt.Printf("[INFO] :: Variables: %+v\n", vars)
-
 	return vars, nil
 }
 
@@ -106,7 +95,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, route := range m.routes {
 		if matchRoute(route, url) {
-			route.Handler(w, r)
+			call(route, w, r)
 			return
 		}
 	}

@@ -88,22 +88,22 @@ var routeMatchingTests = []struct {
 }{{
 	description:   "Testing: Matching routes without variables should match.",
 	requestURL:    "/test/route",
-	route:         Route{URL: "/test/route", hasVariables: false},
+	route:         Route{url: "/test/route", hasVariables: false},
 	expectedMatch: true,
 }, {
 	description:   "Testing: Non-matching routes without variables shouldn't match.",
 	requestURL:    "/test/route/one",
-	route:         Route{URL: "/test/route/two", hasVariables: false},
+	route:         Route{url: "/test/route/two", hasVariables: false},
 	expectedMatch: false,
 }, {
 	description:   "Testing: Matching routes with variables should match.",
 	requestURL:    "/profile/darwin/name",
-	route:         Route{URL: "/profile/{name: string}/name", hasVariables: true},
+	route:         Route{url: "/profile/{name: string}/name", hasVariables: true},
 	expectedMatch: true,
 }, {
 	description:   "Testing: Non-matching routes with variables shouldn't match.",
 	requestURL:    "/profile/darwin/account",
-	route:         Route{URL: "/profile/{name: string}/name", hasVariables: true},
+	route:         Route{url: "/profile/{name: string}/name", hasVariables: true},
 	expectedMatch: false,
 }}
 

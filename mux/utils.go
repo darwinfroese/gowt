@@ -2,7 +2,7 @@ package mux
 
 import (
 	"errors"
-	"fmt"
+	"net/http"
 	"reflect"
 	"strings"
 )
@@ -20,7 +20,7 @@ type variableInfo struct {
 // names are different
 func (m *Mux) containsRoute(route string) (int, bool) {
 	for i, r := range m.routes {
-		if r.URL == route {
+		if r.url == route {
 			return i, true
 		}
 	}
@@ -35,19 +35,19 @@ func (m *Mux) containsRoute(route string) (int, bool) {
 // If there are variables in the route then it matches around those
 func matchRoute(route Route, requestURL string) bool {
 	if !route.hasVariables {
-		return route.URL == requestURL
+		return route.url == requestURL
 	}
 
 	// match the url to the left of the variable declaration first
-	leftIdx := strings.Index(route.URL, "{")
-	if route.URL[:leftIdx-1] != requestURL[:leftIdx-1] {
+	leftIdx := strings.Index(route.url, "{")
+	if route.url[:leftIdx-1] != requestURL[:leftIdx-1] {
 		return false
 	}
 
 	// match the url to the right of the variable declaration now
-	rightIdxRoute := strings.Index(route.URL[leftIdx:], "/")
+	rightIdxRoute := strings.Index(route.url[leftIdx:], "/")
 	rightIdxRequest := strings.Index(requestURL[leftIdx:], "/")
-	if route.URL[leftIdx+rightIdxRoute:] != requestURL[leftIdx+rightIdxRequest:] {
+	if route.url[leftIdx+rightIdxRoute:] != requestURL[leftIdx+rightIdxRequest:] {
 		return false
 	}
 
@@ -89,8 +89,6 @@ func getVariableFromRequest(info variableInfo, request string) interface{} {
 
 	startIdx := strings.Index(info.route, "{"+name)
 	endIdx := startIdx + strings.Index(request[startIdx:], "/")
-
-	fmt.Println("startIdx: ", startIdx, "endIdx: ", endIdx)
 
 	return request[startIdx:endIdx]
 }
@@ -206,4 +204,45 @@ func cleanSplice(splitStrings []string) []string {
 	}
 
 	return newSlice
+}
+
+// call sends the response writer and request to whichever handler
+// type has been initialized
+func call(route Route, w http.ResponseWriter, r *http.Request) {
+	if route.handler.handler == nil {
+		route.handler.handlerFunc(w, r)
+		return
+	}
+
+	route.handler.handler.ServeHTTP(w, r)
+}
+
+// register does the actual registration of the multiplexer, this lets us have
+// the same functionality between both of the registration methods while still
+// providing two methods of registration.
+func register(m *Mux, route string, gh gowtHandler) (*Route, error) {
+	i, ok := m.containsRoute(route)
+
+	variables, err := getVariablesFromRoute(route)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if ok {
+		m.routes[i].handler = gh
+		m.routes[i].variables = variables
+		m.routes[i].hasVariables = len(variables) > 0
+		return &m.routes[i], nil
+	}
+
+	r := Route{
+		url:          route,
+		handler:      gh,
+		variables:    variables,
+		hasVariables: len(variables) > 0,
+	}
+	m.routes = append(m.routes, r)
+
+	return &r, nil
 }

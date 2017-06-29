@@ -1,23 +1,23 @@
 Routes:
-	- Get variables from routes on request
-		- TODO: Get variable by name
+	- TODO: Get variable by name
 	- BUG: Doesn't handle routes with more than one variable
+	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
+	- TODO: Look into concurrency
+	- TODO: Enable CORS per Route / on ALL routes
+	- TODO: Allow method restriction per Route
+	- TODO: Allow setting default response headers per route
 	- TODO: Overwrite responseWriter that lets me store the status code
 		to handle responding with default errorHandlers
-	- TODO: Allow method restriction per Route
-	- TODO: Enable CORS per Route / on ALL routes
-	- TODO: Allow setting default response headers per route
-	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
-	- TODO: Moved to a tree based registration
+	- TODO: Move to a tree based registration
 
 	- RESEARCH: Registering multiple routes where only variable changes in same location
 		- OPTION: 2 routes, check type, serve based on type
 		- OPTION: Replace route with new route and error/warn
 		- QUESTION: Is this something that would occur?
-	
-Multiplexer:
-	- TODO: Walk down the route for matching
-	- TODO: Allow wildcard registration?
+	- RESEARCH: Concurrency
+		- Performance without goroutines
+		- Performance with goroutines
+		- Testing with goroutines serving via mux
 
 - Documentation
 	- TODO: Document objects
@@ -29,3 +29,10 @@ Multiplexer:
 		- Route registration
 		- Route matching
 		- Request serving
+
+RESEARCH NOTES
+--------------
+
+* Wildcard registration
+Wildcard registration is the same as using a variable that you don't
+care about. This is an adequate solution for now.
