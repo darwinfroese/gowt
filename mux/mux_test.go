@@ -243,7 +243,70 @@ func TestVariableListRetrieval(t *testing.T) {
 }
 
 var variableByNameRetrievalTests = []struct {
-	description, routeURL, requestURL, variableName string
-	expectedValue                                   interface{}
-	expectedErrorMessage                            string
-}{{}}
+	description, routeURL, requestURL string
+	expectedValue                     interface{}
+	expectedErrorMessage              string
+}{{
+	description:          "Testing: When no variable is registered in the route no variable information is returned.",
+	routeURL:             "/test/no/variables",
+	requestURL:           "/test/no/variables",
+	expectedValue:        nil,
+	expectedErrorMessage: "No variables found for url \"/test/no/variables\"",
+}, {
+	description:          "Testing: When a variable is registered in a route but the wrong variable name is used no information is returned.",
+	routeURL:             "/test/{profile: string}/bad",
+	requestURL:           "/test/darwin/bad",
+	expectedValue:        nil,
+	expectedErrorMessage: "No variable was found that matched for \"name\"",
+}, {
+	description:          "Testing: When a variable is registered in a route and the right variable name is used the correct information is returned.",
+	routeURL:             "/test/{name: string}/good",
+	requestURL:           "/test/darwin/good",
+	expectedValue:        "darwin",
+	expectedErrorMessage: "",
+}}
+
+func TestVariableRetrievalByName(t *testing.T) {
+	t.Log("Testing getting a variable by name.")
+
+	m := NewMux()
+	var value interface{}
+	var retrievalError error
+	dummy := func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Function was called")
+		value, retrievalError = m.GetVariableByName("name", r)
+	}
+
+	for i, test := range variableByNameRetrievalTests {
+		t.Logf("[ %02d ] %s", i+1, test.description)
+
+		_, err := m.RegisterRoute(test.routeURL, dummy)
+
+		if err != nil {
+			t.Logf("[FAIL] :: Failed to register the route. Error: \"%s\".", err.Error())
+			t.FailNow()
+		}
+
+		r := httptest.NewRequest("GET", test.requestURL, nil)
+		w := httptest.NewRecorder()
+
+		m.ServeHTTP(w, r)
+
+		if strings.TrimSpace(w.Body.String()) != "Function was called" {
+			t.Logf("[FAIL] :: The dummy function was never called.")
+			t.FailNow()
+		}
+
+		if retrievalError != nil {
+			if retrievalError.Error() != test.expectedErrorMessage {
+				t.Logf("[FAIL] :: Got an unexpected error retrieving the variable. Expected \"%s\" but got \"%s\".", test.expectedErrorMessage, retrievalError.Error())
+				t.Fail()
+			}
+		}
+
+		if test.expectedValue != value {
+			t.Logf("[FAIL] :: Expected %+v but got %+v instead.", test.expectedValue, value)
+			t.Fail()
+		}
+	}
+}

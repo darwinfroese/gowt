@@ -2,6 +2,7 @@ package mux
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -83,8 +84,32 @@ func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
 }
 
 // GetVariableByName returns an interface{} that contains the value for the request
-func (m *Mux) GetVariableByName(name, request string) (interface{}, error) {
-	return nil, nil
+func (m *Mux) GetVariableByName(name string, request *http.Request) (interface{}, error) {
+	var infoList []variableInfo
+	for _, route := range m.routes {
+		if matchRoute(route, request.URL.Path) {
+			infoList = append(infoList, route.variables...)
+		}
+	}
+
+	if len(infoList) == 0 {
+		e := fmt.Errorf("No variables found for url \"%s\"", request.URL.Path)
+		return nil, e
+	}
+
+	var val interface{}
+	for _, v := range infoList {
+		if v.name == name {
+			val = getVariableFromRequest(v, request.URL.Path)
+		}
+	}
+
+	if val == nil {
+		e := fmt.Errorf("No variable was found that matched for \"%s\"", name)
+		return nil, e
+	}
+
+	return val, nil
 }
 
 // ServeHTTP matches the route incoming to the routes registered and calls the
