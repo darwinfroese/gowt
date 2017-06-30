@@ -2,6 +2,7 @@ package mux
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -38,20 +39,49 @@ func matchRoute(route Route, requestURL string) bool {
 		return route.url == requestURL
 	}
 
-	// match the url to the left of the variable declaration first
-	leftIdx := strings.Index(route.url, "{")
-	if route.url[:leftIdx-1] != requestURL[:leftIdx-1] {
-		return false
+	varCount := len(route.variables)
+	url := route.url
+	req := requestURL
+
+	fmt.Println("Starting with url: ", url, "req: ", req)
+
+	for i := 0; i < varCount; i++ {
+		leftIdx := strings.Index(url, "{")
+
+		if leftIdx == -1 || leftIdx > len(req) {
+			break
+		}
+
+		// match the url to the left of the variable declaration first
+		if url[:leftIdx] != req[:leftIdx] {
+			return false
+		}
+
+		// remove the portion of the URL that we've matched
+		urlIdx := strings.Index(url[leftIdx:], "/")
+		reqIdx := strings.Index(req[leftIdx:], "/")
+		var rightIdxRoute int
+		var rightIdxRequest int
+
+		if urlIdx == -1 {
+			rightIdxRoute = len(url[leftIdx:]) - 1
+			rightIdxRequest = len(req[leftIdx:]) - 1
+		} else {
+			rightIdxRoute = urlIdx
+			rightIdxRequest = reqIdx
+		}
+
+		url = url[leftIdx+rightIdxRoute+1:]
+		req = req[leftIdx+rightIdxRequest+1:]
 	}
 
-	// match the url to the right of the variable declaration now
-	rightIdxRoute := strings.Index(route.url[leftIdx:], "/")
-	rightIdxRequest := strings.Index(requestURL[leftIdx:], "/")
-	if route.url[leftIdx+rightIdxRoute:] != requestURL[leftIdx+rightIdxRequest:] {
-		return false
+	// if the URL and RequestURL aren't empty, lets check the end of it
+	if len(url) >= 0 || len(req) >= 0 {
+		fmt.Println("True Test -- url: ", url, "req: ", req, url == req)
+		return url == req
 	}
 
-	return true
+	return false
 }
 
 // getVariablesFromRoute - Returns an array of variableInfo structs for
@@ -87,10 +117,23 @@ func getVariablesFromRoute(route string) ([]variableInfo, error) {
 func getVariableFromRequest(info variableInfo, request string) interface{} {
 	name := info.name
 
-	startIdx := strings.Index(info.route, "{"+name)
-	endIdx := startIdx + strings.Index(request[startIdx:], "/")
+	leftIdx := strings.Index(info.route, "{"+name)
+	lessVar := info.route[:leftIdx]
+	count := strings.Count(lessVar, "/")
+	req := request
 
-	return request[startIdx:endIdx]
+	for i := 0; i < count; i++ {
+		idx := strings.Index(req, "/")
+		req = req[idx+1:]
+	}
+
+	// if we still have something on the right hand side, return everything else
+	i := strings.Index(req, "/")
+	if i > 0 {
+		return req[:i]
+	}
+
+	return req
 }
 
 // getVariableStrings - Returns all the strings for the variables found

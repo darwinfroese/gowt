@@ -65,10 +65,14 @@ func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) boo
 func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
 	var infoList []variableInfo
 	for _, route := range m.routes {
+		fmt.Println("Get Variables matchroute start...")
 		if matchRoute(route, request.URL.Path) {
+			fmt.Printf("Matched: %s and %s\n", route.url, request.URL.Path)
 			infoList = append(infoList, route.variables...)
 		}
 	}
+
+	fmt.Println("Done matching.")
 
 	if len(infoList) == 0 {
 		return nil, errors.New("No variables matched for the route and request")

@@ -98,13 +98,33 @@ var routeMatchingTests = []struct {
 }, {
 	description:   "Testing: Matching routes with variables should match.",
 	requestURL:    "/profile/darwin/name",
-	route:         Route{url: "/profile/{name: string}/name", hasVariables: true},
+	route:         Route{url: "/profile/{name: string}/name", hasVariables: true, variables: []variableInfo{variableInfo{}}},
+	expectedMatch: true,
+}, {
+	description:   "Testing: Matching a route with the variable at the end should match.",
+	requestURL:    "/profile/darwin/name",
+	route:         Route{url: "/profile/{name: string}/name", hasVariables: true, variables: []variableInfo{variableInfo{}}},
 	expectedMatch: true,
 }, {
 	description:   "Testing: Non-matching routes with variables shouldn't match.",
 	requestURL:    "/profile/darwin/account",
-	route:         Route{url: "/profile/{name: string}/name", hasVariables: true},
+	route:         Route{url: "/profile/{name: string}/name", hasVariables: true, variables: []variableInfo{variableInfo{}}},
 	expectedMatch: false,
+}, {
+	description:   "Testing: Matching routes with two variables should match.",
+	requestURL:    "/test/darwin/test/1234/test",
+	route:         Route{url: "/test/{name}/test/{test}/test", hasVariables: true, variables: []variableInfo{variableInfo{}, variableInfo{}}},
+	expectedMatch: true,
+}, {
+	description:   "Testing: Non-matching routes with multiple variables shouldn't match.",
+	requestURL:    "/test/darwin/test/1234/test",
+	route:         Route{url: "/other/{name}/other/{test}/other", hasVariables: true, variables: []variableInfo{variableInfo{}, variableInfo{}}},
+	expectedMatch: false,
+}, {
+	description:   "Testing: Matching routes with two variables at the end should match.",
+	requestURL:    "/other/darwin/1234",
+	route:         Route{url: "/other/{name}/{age}", hasVariables: true, variables: []variableInfo{variableInfo{}, variableInfo{}}},
+	expectedMatch: true,
 }}
 
 func TestRouteMatching(t *testing.T) {

@@ -121,7 +121,7 @@ var variableRouteRegistrationTests = []struct {
 	expectedResponse:      response{Body: "Hello World", Code: 200},
 	expectedVariableCount: 0,
 }, {
-	description:           "Testing: registering a route with one variable should have one variable stored.",
+	description:           "Testing: registering a route with one variable should have a count of one variable stored.",
 	route:                 "/testing/{name: string}/variable",
 	requestRoute:          "/testing/darwin/variable",
 	handler:               func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "Hello World") },
@@ -134,6 +134,24 @@ var variableRouteRegistrationTests = []struct {
 	handler:               func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "New function") },
 	expectedResponse:      response{Body: "New function", Code: 200},
 	expectedVariableCount: 1,
+}, {
+	description:  "Testing: Registering a route with two variables should have a count of two variables stored.",
+	route:        "/testing/{name: string}/variable/{age: int}",
+	requestRoute: "/testing/darwin/variable/1234",
+	handler: func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Two variable function")
+	},
+	expectedResponse:      response{Body: "Two variable function", Code: 200},
+	expectedVariableCount: 2,
+}, {
+	description:  "Testing: Registering a route with multiple variables should return the correct number of variables stored.",
+	route:        "/testing/{name}/{age}/{otherID}",
+	requestRoute: "/testing/d/1/d",
+	handler: func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Multi variable function")
+	},
+	expectedResponse:      response{Body: "Multi variable function", Code: 200},
+	expectedVariableCount: 3,
 }}
 
 func TestVariableRouteRegistration(t *testing.T) {
@@ -189,6 +207,24 @@ var variableListRetrievalTests = []struct {
 	routeURL:             "/test/{name: string}/test",
 	requestURL:           "/test/darwin/test",
 	expectedValues:       []interface{}{"darwin"},
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When registering a route with a variable at the end of the route the expceted variable is returned.",
+	routeURL:             "/test/{name:string}",
+	requestURL:           "/test/darwin",
+	expectedValues:       []interface{}{"darwin"},
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When registering a route with two variables in the route the expected variables are returned.",
+	routeURL:             "/test/{name: string}/{age: int}",
+	requestURL:           "/test/darwin/1234",
+	expectedValues:       []interface{}{"darwin", 1234},
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When registering any number of variables in a route the expected variables are returned.",
+	routeURL:             "/test/{name}/{age:int}/{profile}/{count}",
+	requestURL:           "/test/d/1/e/2",
+	expectedValues:       []interface{}{"d", 1, "e", 2},
 	expectedErrorMessage: "",
 }}
 
@@ -262,6 +298,24 @@ var variableByNameRetrievalTests = []struct {
 	description:          "Testing: When a variable is registered in a route and the right variable name is used the correct information is returned.",
 	routeURL:             "/test/{name: string}/good",
 	requestURL:           "/test/darwin/good",
+	expectedValue:        "darwin",
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When a variable is registered at the end of the route and the right variable name is used the correct information is returned.",
+	routeURL:             "/test/{name:string}",
+	requestURL:           "/test/darwin",
+	expectedValue:        "darwin",
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When two variables are registered in a route and the right variable name is used the correct value is returned.",
+	routeURL:             "/test/{age: int}/{name: string}",
+	requestURL:           "/test/1234/darwin",
+	expectedValue:        "darwin",
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: when multiple variables are registered in a route and the right variable name is used the correct value is returned.",
+	routeURL:             "/test/{age}/{count}/{name}",
+	requestURL:           "/test/1/2/darwin",
 	expectedValue:        "darwin",
 	expectedErrorMessage: "",
 }}
