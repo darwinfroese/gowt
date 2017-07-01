@@ -8,11 +8,32 @@ import (
 	"strings"
 )
 
+// logger is an interface that should be capable of satisfying
+// most common log interfaces? This lets the mux log what happens
+// if a logger is provided by the consumer.
+type logger interface {
+	Info(string, ...interface{})
+	Warn(string, ...interface{})
+	Debug(string, ...interface{})
+	Error(string, ...interface{})
+}
+
 // variableInfo contains the information about the variable
 // that is extracted from the route
 type variableInfo struct {
 	name, route string
 	kind        reflect.Kind
+}
+
+// routeNode is a struct that contains information about a "block"
+// of a request or route and is used for constructing a tree of
+// registered routes and walking down that tree to match routes.
+type routeNode struct {
+	path       string
+	isVariable bool
+	variableInfo
+
+	subroutes []*routeNode
 }
 
 // containsRoute performs a simple check on if the route is

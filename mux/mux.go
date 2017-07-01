@@ -12,7 +12,9 @@ import (
 // ErrorHandlers map[int]Route - A map of routes to HTTP status codes
 type Mux struct {
 	routes        []Route
-	ErrorHandlers map[int]http.HandlerFunc
+	errorHandlers map[int]http.HandlerFunc
+
+	logger
 }
 
 // NewMux returns a new Mux object with the default not found handler registered,
@@ -22,7 +24,7 @@ func NewMux() *Mux {
 	errorHandlers[http.StatusNotFound] = DefaultNotFoundHandler
 
 	return &Mux{
-		ErrorHandlers: errorHandlers,
+		errorHandlers: errorHandlers,
 	}
 }
 
@@ -54,8 +56,8 @@ func (m *Mux) RegisterRoute(route string, handler http.HandlerFunc) (*Route, err
 func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) bool {
 
 	// if ok is true, the map contained a value
-	_, ok := m.ErrorHandlers[statusCode]
-	m.ErrorHandlers[statusCode] = handler
+	_, ok := m.errorHandlers[statusCode]
+	m.errorHandlers[statusCode] = handler
 
 	return ok
 }
@@ -129,6 +131,6 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h := m.ErrorHandlers[http.StatusNotFound]
+	h := m.errorHandlers[http.StatusNotFound]
 	h(w, r)
 }
