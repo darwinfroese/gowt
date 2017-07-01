@@ -10,6 +10,8 @@ import (
 //
 // Routes []Route - The array of routes that have been registered to the multiplexer
 // ErrorHandlers map[int]Route - A map of routes to HTTP status codes
+// logger - A logger interface that can be set by a consumer so that
+// the mux can log actions to the users logging system
 type Mux struct {
 	routes        []Route
 	errorHandlers map[int]http.HandlerFunc
@@ -67,14 +69,10 @@ func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) boo
 func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
 	var infoList []variableInfo
 	for _, route := range m.routes {
-		fmt.Println("Get Variables matchroute start...")
 		if matchRoute(route, request.URL.Path) {
-			fmt.Printf("Matched: %s and %s\n", route.url, request.URL.Path)
 			infoList = append(infoList, route.variables...)
 		}
 	}
-
-	fmt.Println("Done matching.")
 
 	if len(infoList) == 0 {
 		return nil, errors.New("No variables matched for the route and request")

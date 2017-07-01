@@ -2,7 +2,6 @@ package mux
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -64,8 +63,6 @@ func matchRoute(route Route, requestURL string) bool {
 	url := route.url
 	req := requestURL
 
-	fmt.Println("Starting with url: ", url, "req: ", req)
-
 	for i := 0; i < varCount; i++ {
 		leftIdx := strings.Index(url, "{")
 
@@ -98,7 +95,6 @@ func matchRoute(route Route, requestURL string) bool {
 
 	// if the URL and RequestURL aren't empty, lets check the end of it
 	if len(url) >= 0 || len(req) >= 0 {
-		fmt.Println("True Test -- url: ", url, "req: ", req, url == req)
 		return url == req
 	}
 
