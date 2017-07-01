@@ -22,9 +22,9 @@ var routeExtractionTests = []struct {
 	route:       "/test/{age: int}/test",
 	expected:    []variableInfo{variableInfo{name: "age", kind: reflect.Int}},
 }, {
-	description: "Testing: When providing a route without a type, a default type of interface{} will be used.",
+	description: "Testing: When providing a route without a type, a default type of string will be used.",
 	route:       "/test/{name}/test",
-	expected:    []variableInfo{variableInfo{name: "name", kind: reflect.Interface}},
+	expected:    []variableInfo{variableInfo{name: "name", kind: reflect.String}},
 }, {
 	description: "Testing: When providing multiple variables, all variables are returned",
 	route:       "/test/{name: string}/{age: int}",

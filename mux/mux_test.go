@@ -224,7 +224,7 @@ var variableListRetrievalTests = []struct {
 	description:          "Testing: When registering any number of variables in a route the expected variables are returned.",
 	routeURL:             "/test/{name}/{age:int}/{profile}/{count}",
 	requestURL:           "/test/d/1/e/2",
-	expectedValues:       []interface{}{"d", 1, "e", 2},
+	expectedValues:       []interface{}{"d", 1, "e", "2"},
 	expectedErrorMessage: "",
 }}
 

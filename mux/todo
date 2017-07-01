@@ -1,13 +1,9 @@
-- BUG: "/" count as part of a string -- need to switch to tree at this point
-
 - TODO: Get test coverage
 
 Routes:
-	- BUG: Doesn't handle routes with more than one variable
 	- BUG: How do we handle trailing "/":
 		- In RegistrationRoute?
 		- In Request URL?
-
 
 	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
 	- TODO: Enable CORS per Route / on ALL routes
@@ -15,10 +11,13 @@ Routes:
 	- TODO: Refactor variable retrieval -- code duplication
 
 Multiplexer:
+	- TODO: Add log calls
 	- TODO: Generalize route matching
 		- With things like a fileserver, it only matches exactly
 		- Need to look into when to catch a general route and when
 		to catch an exact route
+	- TODO: Match constant routes over variable routes when possible
+		- Match /test/constant/test2 before /test/{variable}/test2
 	- TODO: Look into concurrency
 	- TODO: Allow setting default response headers per route
 	- TODO: Overwrite responseWriter that lets me store the status code

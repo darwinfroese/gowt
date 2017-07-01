@@ -7,32 +7,11 @@ import (
 	"strings"
 )
 
-// logger is an interface that should be capable of satisfying
-// most common log interfaces? This lets the mux log what happens
-// if a logger is provided by the consumer.
-type logger interface {
-	Info(string, ...interface{})
-	Warn(string, ...interface{})
-	Debug(string, ...interface{})
-	Error(string, ...interface{})
-}
-
 // variableInfo contains the information about the variable
 // that is extracted from the route
 type variableInfo struct {
 	name, route string
 	kind        reflect.Kind
-}
-
-// routeNode is a struct that contains information about a "block"
-// of a request or route and is used for constructing a tree of
-// registered routes and walking down that tree to match routes.
-type routeNode struct {
-	path       string
-	isVariable bool
-	variableInfo
-
-	subroutes []*routeNode
 }
 
 // containsRoute performs a simple check on if the route is
@@ -58,47 +37,24 @@ func matchRoute(route Route, requestURL string) bool {
 	if !route.hasVariables {
 		return route.url == requestURL
 	}
+	urlBlocks := cleanSlice(strings.Split(route.url, "/"))
+	reqBlocks := cleanSlice(strings.Split(requestURL, "/"))
 
-	varCount := len(route.variables)
-	url := route.url
-	req := requestURL
+	if len(urlBlocks) != len(reqBlocks) {
+		return false
+	}
 
-	for i := 0; i < varCount; i++ {
-		leftIdx := strings.Index(url, "{")
-
-		if leftIdx == -1 || leftIdx > len(req) {
-			break
+	for i, block := range urlBlocks {
+		if block[0] == '{' && block[len(block)-1] == '}' {
+			continue
 		}
 
-		// match the url to the left of the variable declaration first
-		if url[:leftIdx] != req[:leftIdx] {
+		if block != reqBlocks[i] {
 			return false
 		}
-
-		// remove the portion of the URL that we've matched
-		urlIdx := strings.Index(url[leftIdx:], "/")
-		reqIdx := strings.Index(req[leftIdx:], "/")
-		var rightIdxRoute int
-		var rightIdxRequest int
-
-		if urlIdx == -1 {
-			rightIdxRoute = len(url[leftIdx:]) - 1
-			rightIdxRequest = len(req[leftIdx:]) - 1
-		} else {
-			rightIdxRoute = urlIdx
-			rightIdxRequest = reqIdx
-		}
-
-		url = url[leftIdx+rightIdxRoute+1:]
-		req = req[leftIdx+rightIdxRequest+1:]
 	}
 
-	// if the URL and RequestURL aren't empty, lets check the end of it
-	if len(url) >= 0 || len(req) >= 0 {
-		return url == req
-	}
-
-	return false
+	return true
 }
 
 // getVariablesFromRoute - Returns an array of variableInfo structs for
@@ -131,26 +87,19 @@ func getVariablesFromRoute(route string) ([]variableInfo, error) {
 	return infoSplice, nil
 }
 
+// getVariableFromRequest returns the value from the request
 func getVariableFromRequest(info variableInfo, request string) interface{} {
-	name := info.name
+	urlBlocks := cleanSlice(strings.Split(info.route, "/"))
+	reqBlocks := cleanSlice(strings.Split(request, "/"))
 
-	leftIdx := strings.Index(info.route, "{"+name)
-	lessVar := info.route[:leftIdx]
-	count := strings.Count(lessVar, "/")
-	req := request
-
-	for i := 0; i < count; i++ {
-		idx := strings.Index(req, "/")
-		req = req[idx+1:]
+	var val interface{}
+	for i, block := range urlBlocks {
+		if strings.Contains(block, info.name) {
+			val = cast(info.kind, reqBlocks[i])
+		}
 	}
 
-	// if we still have something on the right hand side, return everything else
-	i := strings.Index(req, "/")
-	if i > 0 {
-		return req[:i]
-	}
-
-	return req
+	return val
 }
 
 // getVariableStrings - Returns all the strings for the variables found
@@ -167,7 +116,7 @@ func getVariableStrings(route string) ([]string, error) {
 	}
 
 	variables := []string{}
-	rawSplice := cleanSplice(strings.SplitAfter(route, "}"))
+	rawSplice := getVariables(strings.SplitAfter(route, "}"))
 
 	for _, s := range rawSplice {
 		variables = append(variables, s[strings.Index(s, "{"):])
@@ -216,49 +165,26 @@ func checkVariableSyntax(route string) error {
 	return nil
 }
 
-// getKind - Returns the reflect.Kind for a type defined by a string
-//
-// TODO: Can this be done without a switch/case?
-func getKind(kind string) reflect.Kind {
-	switch kind {
-	case "string":
-		return reflect.String
-	case "int":
-		return reflect.Int
-	case "int8":
-		return reflect.Int8
-	case "int16":
-		return reflect.Int16
-	case "int32":
-		return reflect.Int32
-	case "int64":
-		return reflect.Int64
-	case "uint":
-		return reflect.Uint
-	case "uint8":
-		return reflect.Uint8
-	case "uint16":
-		return reflect.Uint16
-	case "uint32":
-		return reflect.Uint32
-	case "uint64":
-		return reflect.Uint64
-	case "interface":
-	default:
-		return reflect.Interface
-	}
-
-	// Default should catch this but it's a compiler error otherwise
-	return reflect.Interface
-}
-
-// cleanSplice - Removes all the strings from the slice that
+// getVariables - Removes all the strings from the slice that
 // are empty or do not contain a variable
-func cleanSplice(splitStrings []string) []string {
+func getVariables(splitStrings []string) []string {
 	newSlice := []string{}
 
 	for _, s := range splitStrings {
 		if s != "" && strings.Contains(s, "{") {
+			newSlice = append(newSlice, s)
+		}
+	}
+
+	return newSlice
+}
+
+// cleanSlice - Removes all the strings from the slice that are empty
+func cleanSlice(slice []string) []string {
+	newSlice := []string{}
+
+	for _, s := range slice {
+		if s != "" {
 			newSlice = append(newSlice, s)
 		}
 	}
@@ -277,10 +203,10 @@ func call(route Route, w http.ResponseWriter, r *http.Request) {
 	route.handler.handler.ServeHTTP(w, r)
 }
 
-// register does the actual registration of the multiplexer, this lets us have
-// the same functionality between both of the registration methods while still
-// providing two methods of registration.
-func register(m *Mux, route string, gh gowtHandler) (*Route, error) {
+// register does the actual registration of handlers to the multiplexer,
+// this lets us have the same functionality between both of the
+// registration methods while still providing two methods of registration.
+func (m *Mux) register(route string, gh gowtHandler) (*Route, error) {
 	i, ok := m.containsRoute(route)
 
 	variables, err := getVariablesFromRoute(route)

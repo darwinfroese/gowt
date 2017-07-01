@@ -8,8 +8,10 @@ import (
 
 // Mux - A multiplexer object that is used for registering routes
 //
-// Routes []Route - The array of routes that have been registered to the multiplexer
-// ErrorHandlers map[int]Route - A map of routes to HTTP status codes
+// routes []Route - The array of routes that have been registered to the multiplexer
+// errorHandlers map[int]Route - A map of routes to HTTP status codes
+// rootNode - The root node that maps to the "/" node as the root of
+// the tree of routes
 // logger - A logger interface that can be set by a consumer so that
 // the mux can log actions to the users logging system
 type Mux struct {
@@ -20,7 +22,7 @@ type Mux struct {
 }
 
 // NewMux returns a new Mux object with the default not found handler registered,
-// this returns 404 a handler wasn't found for the route received
+// this returns 404 a handler wasn't found for the route received.
 func NewMux() *Mux {
 	errorHandlers := make(map[int]http.HandlerFunc, 1)
 	errorHandlers[http.StatusNotFound] = DefaultNotFoundHandler
@@ -28,6 +30,18 @@ func NewMux() *Mux {
 	return &Mux{
 		errorHandlers: errorHandlers,
 	}
+}
+
+// RegisterLogger registers a logger for the multiplexer that can log actions
+// to the provided logging system. logger is a simple interface that provides
+// a (hopefully) commonplace log functionality.
+//
+// RegisterLogger will make an attempt to write an info level log entry to
+// verify that the logger is working.
+func (m *Mux) RegisterLogger(l logger) {
+	m.logger = l
+
+	m.log(infoLevel, "Logger has been registered for GOWT Mux.")
 }
 
 // RegisterHandler adds a Handler to the multiplexer for the route specified. If the
@@ -38,7 +52,7 @@ func NewMux() *Mux {
 func (m *Mux) RegisterHandler(route string, handler http.Handler) (*Route, error) {
 	gh := gowtHandler{handler: handler}
 
-	return register(m, route, gh)
+	return m.register(route, gh)
 }
 
 // RegisterRoute adds a HandlerFunc to the multiplexer for the route specified. If
@@ -48,7 +62,7 @@ func (m *Mux) RegisterHandler(route string, handler http.Handler) (*Route, error
 func (m *Mux) RegisterRoute(route string, handler http.HandlerFunc) (*Route, error) {
 	gh := gowtHandler{handlerFunc: handler}
 
-	return register(m, route, gh)
+	return m.register(route, gh)
 }
 
 // RegisterErrorHandler registers an http.HandlerFunc for a status code providing
