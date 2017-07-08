@@ -3,15 +3,13 @@ package mux
 import (
 	"errors"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
 // variableInfo contains the information about the variable
 // that is extracted from the route
 type variableInfo struct {
-	name, route string
-	kind        reflect.Kind
+	name, route, kind string
 }
 
 // containsRoute performs a simple check on if the route is
@@ -92,18 +90,21 @@ func getVariablesFromRoute(route string) ([]variableInfo, error) {
 }
 
 // getVariableFromRequest returns the value from the request
-func getVariableFromRequest(info variableInfo, request string) interface{} {
+func getVariableFromRequest(info variableInfo, request string) (val interface{}, err error) {
 	urlBlocks := cleanSlice(strings.Split(info.route, "/"))
 	reqBlocks := cleanSlice(strings.Split(request, "/"))
 
-	var val interface{}
 	for i, block := range urlBlocks {
 		if strings.Contains(block, info.name) {
-			val = cast(info.kind, reqBlocks[i])
+			val, err = cast(info.kind, reqBlocks[i])
+
+			if err != nil {
+				val = nil
+			}
 		}
 	}
 
-	return val
+	return
 }
 
 // getVariableStrings - Returns all the strings for the variables found
@@ -144,13 +145,14 @@ func getVariableInfo(variable string) (variableInfo, error) {
 	}
 
 	pieces := strings.Split(decon, ":")
-	// if kindString is empty, it'll default to interface
-	kindString := ""
+	// kindString needs to default to "string" since we are just using a string value to store
+	// the kind and we want "string" as the default case
+	kindString := "string"
 	if len(pieces) > 1 {
 		kindString = strings.TrimSpace(pieces[1])
 	}
 
-	info := variableInfo{name: strings.TrimSpace(pieces[0]), kind: getKind(kindString)}
+	info := variableInfo{name: strings.TrimSpace(pieces[0]), kind: strings.ToLower(kindString)}
 
 	return info, nil
 }

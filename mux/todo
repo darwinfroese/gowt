@@ -1,15 +1,14 @@
 Routes:
-	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
 	- TODO: Enable CORS per Route / on ALL routes
 	- TODO: Allow method restriction per Route
 	- TODO: Refactor variable retrieval -- code duplication
 
 Multiplexer:
-	- TODO: Add log calls
 	- TODO: Generalize route matching
 		- With things like a fileserver, it only matches exactly
 		- Need to look into when to catch a general route and when
 		to catch an exact route
+	- TODO: Add log calls
 	- TODO: Match constant routes over variable routes when possible
 		- Match /test/constant/test2 before /test/{variable}/test2
 	- TODO: Look into concurrency

@@ -230,6 +230,18 @@ var variableListRetrievalTests = []struct {
 	requestURL:           "/test/d/1/e/2",
 	expectedValues:       []interface{}{"d", 1, "e", "2"},
 	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When registering a variable with an unsigned integer an unsigned integer should be returned.",
+	routeURL:             "/unsigned/{value: uint}/test",
+	requestURL:           "/unsigned/1234/test",
+	expectedValues:       []interface{}{uint(1234)},
+	expectedErrorMessage: "",
+}, {
+	description:          "Testing: When registering a variable with a specific integer value size that size of an integer should be returned.",
+	routeURL:             "/int/{value: int16}/size",
+	requestURL:           "/int/123/size",
+	expectedValues:       []interface{}{int16(123)},
+	expectedErrorMessage: "",
 }}
 
 func TestVariableListRetrieval(t *testing.T) {
@@ -277,6 +289,9 @@ func TestVariableListRetrieval(t *testing.T) {
 
 		if !reflect.DeepEqual(test.expectedValues, values) {
 			t.Logf("[FAIL] :: Expected to get %+v but got %+v.", test.expectedValues, values)
+			for i, v := range test.expectedValues {
+				t.Logf("[FAIL INFO] :: Expected value of type %v but got value of type %v.", reflect.TypeOf(v), reflect.TypeOf(values[i]))
+			}
 			t.Fail()
 		}
 	}

@@ -80,7 +80,7 @@ func (m *Mux) RegisterErrorHandler(statusCode int, handler http.HandlerFunc) boo
 
 // GetVariables returns a slice of interface{} that contains all the variables for
 // request.
-func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
+func (m *Mux) GetVariables(request *http.Request) (variables []interface{}, err error) {
 	var infoList []variableInfo
 	for _, route := range m.routes {
 		if matchRoute(route, request.URL.Path) {
@@ -89,20 +89,27 @@ func (m *Mux) GetVariables(request *http.Request) ([]interface{}, error) {
 	}
 
 	if len(infoList) == 0 {
-		return nil, errors.New("No variables matched for the route and request")
+		err = errors.New("No variables matched for the route and request")
+		return
 	}
 
-	var vars []interface{}
 	for _, v := range infoList {
-		i := getVariableFromRequest(v, request.URL.Path)
-		vars = append(vars, i)
+		val, e := getVariableFromRequest(v, request.URL.Path)
+
+		if e != nil {
+			variables = nil
+			err = e
+			return
+		}
+
+		variables = append(variables, val)
 	}
 
-	return vars, nil
+	return
 }
 
 // GetVariableByName returns an interface{} that contains the value for the request
-func (m *Mux) GetVariableByName(name string, request *http.Request) (interface{}, error) {
+func (m *Mux) GetVariableByName(name string, request *http.Request) (variable interface{}, err error) {
 	var infoList []variableInfo
 	for _, route := range m.routes {
 		if matchRoute(route, request.URL.Path) {
@@ -111,23 +118,17 @@ func (m *Mux) GetVariableByName(name string, request *http.Request) (interface{}
 	}
 
 	if len(infoList) == 0 {
-		e := fmt.Errorf("No variables found for url \"%s\"", request.URL.Path)
-		return nil, e
+		err = fmt.Errorf("No variables found for url \"%s\"", request.URL.Path)
+		return
 	}
 
-	var val interface{}
 	for _, v := range infoList {
 		if v.name == name {
-			val = getVariableFromRequest(v, request.URL.Path)
+			variable, err = getVariableFromRequest(v, request.URL.Path)
 		}
 	}
 
-	if val == nil {
-		e := fmt.Errorf("No variable was found that matched for \"%s\"", name)
-		return nil, e
-	}
-
-	return val, nil
+	return
 }
 
 // ServeHTTP matches the route incoming to the routes registered and calls the

@@ -1,9 +1,6 @@
 package mux
 
-import (
-	"reflect"
-	"testing"
-)
+import "testing"
 
 var routeExtractionTests = []struct {
 	description, route string
@@ -16,19 +13,19 @@ var routeExtractionTests = []struct {
 }, {
 	description: "Testing: When providing a good route, the variable will be extracted.",
 	route:       "/test/{name: string}/test",
-	expected:    []variableInfo{variableInfo{name: "name", kind: reflect.String}},
+	expected:    []variableInfo{variableInfo{name: "name", kind: "string"}},
 }, {
 	description: "Testing: When providing a good route, any variable type will be extracted.",
-	route:       "/test/{age: int}/test",
-	expected:    []variableInfo{variableInfo{name: "age", kind: reflect.Int}},
+	route:       "/test/{age: Int}/test",
+	expected:    []variableInfo{variableInfo{name: "age", kind: "int"}},
 }, {
 	description: "Testing: When providing a route without a type, a default type of string will be used.",
 	route:       "/test/{name}/test",
-	expected:    []variableInfo{variableInfo{name: "name", kind: reflect.String}},
+	expected:    []variableInfo{variableInfo{name: "name", kind: "string"}},
 }, {
 	description: "Testing: When providing multiple variables, all variables are returned",
-	route:       "/test/{name: string}/{age: int}",
-	expected:    []variableInfo{variableInfo{name: "name", kind: reflect.String}, variableInfo{name: "age", kind: reflect.Int}},
+	route:       "/test/{name: StRiNg}/{age: INT}",
+	expected:    []variableInfo{variableInfo{name: "name", kind: "string"}, variableInfo{name: "age", kind: "int"}},
 }, {
 	description:  "Testing: When providing a malformed route, the variable will not be extracted.",
 	route:        "/test/{name: string/test",
