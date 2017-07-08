@@ -29,6 +29,10 @@ var routeRegistrationTests = []struct {
 	description:   "Testing: Registering a registered route should overwrite existing route",
 	route:         "testroute2",
 	expectedCount: 2,
+}, {
+	description:   "Testing: Registering a registered route but with a trailing \"/\" should not increment the route count",
+	route:         "testroute2/",
+	expectedCount: 2,
 }}
 
 func TestRouteRegistration(t *testing.T) {

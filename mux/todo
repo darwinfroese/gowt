@@ -1,10 +1,4 @@
-- TODO: Get test coverage
-
 Routes:
-	- BUG: How do we handle trailing "/":
-		- In RegistrationRoute?
-		- In Request URL?
-
 	- TODO: Throw HTTP error if the data isn't of the type specified in the variable
 	- TODO: Enable CORS per Route / on ALL routes
 	- TODO: Allow method restriction per Route
@@ -23,6 +17,7 @@ Multiplexer:
 	- TODO: Overwrite responseWriter that lets me store the status code
 		to handle responding with default errorHandlers
 	- TODO: Move to a tree based registration
+	- TODO: Switch to named return values (better internally!)
 
 	- RESEARCH: Registering multiple routes where only variable changes in same location
 		- OPTION: 2 routes, check type, serve based on type

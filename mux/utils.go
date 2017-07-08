@@ -34,6 +34,10 @@ func (m *Mux) containsRoute(route string) (int, bool) {
 // Exact matching is used of there are no variables in the route.
 // If there are variables in the route then it matches around those
 func matchRoute(route Route, requestURL string) bool {
+	if requestURL[len(requestURL)-1] == '/' {
+		requestURL = requestURL[:len(requestURL)-1]
+	}
+
 	if !route.hasVariables {
 		return route.url == requestURL
 	}
@@ -207,6 +211,10 @@ func call(route Route, w http.ResponseWriter, r *http.Request) {
 // this lets us have the same functionality between both of the
 // registration methods while still providing two methods of registration.
 func (m *Mux) register(route string, gh gowtHandler) (*Route, error) {
+	if route[len(route)-1] == '/' {
+		route = route[:len(route)-1]
+	}
+
 	i, ok := m.containsRoute(route)
 
 	variables, err := getVariablesFromRoute(route)

@@ -125,6 +125,11 @@ var routeMatchingTests = []struct {
 	requestURL:    "/other/darwin/1234",
 	route:         Route{url: "/other/{name}/{age}", hasVariables: true, variables: []variableInfo{variableInfo{}, variableInfo{}}},
 	expectedMatch: true,
+}, {
+	description:   "Testing: Matching a route with a trailing \"/\" should match the route registered without the trailing \"/\"",
+	requestURL:    "/other/testing/tested/",
+	route:         Route{url: "/other/testing/tested", hasVariables: false},
+	expectedMatch: true,
 }}
 
 func TestRouteMatching(t *testing.T) {
