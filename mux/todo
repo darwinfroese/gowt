@@ -9,13 +9,13 @@ Multiplexer:
 		- Need to look into when to catch a general route and when
 		to catch an exact route
 	- TODO: Add log calls
-	- TODO: Match constant routes over variable routes when possible
-		- Match /test/constant/test2 before /test/{variable}/test2
 	- TODO: Look into concurrency
 	- TODO: Allow setting default response headers per route
 	- TODO: Overwrite responseWriter that lets me store the status code
 		to handle responding with default errorHandlers
 	- TODO: Move to a tree based registration
+	- TODO: Match constant routes over variable routes when possible
+		- Match /test/constant/test2 before /test/{variable}/test2
 	- TODO: Switch to named return values (better internally!)
 
 	- RESEARCH: Registering multiple routes where only variable changes in same location
