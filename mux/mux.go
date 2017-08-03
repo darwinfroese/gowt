@@ -10,8 +10,6 @@ import (
 //
 // routes []Route - The array of routes that have been registered to the multiplexer
 // errorHandlers map[int]Route - A map of routes to HTTP status codes
-// rootNode - The root node that maps to the "/" node as the root of
-// the tree of routes
 // logger - A logger interface that can be set by a consumer so that
 // the mux can log actions to the users logging system
 type Mux struct {
